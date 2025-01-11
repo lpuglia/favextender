@@ -1,0 +1,28 @@
+<addon id="script.contextmenu.favextender" version="1.0.0" name="Favorite Extender" provider-name="YourName">
+    <requires>
+      <import addon="xbmc.python" version="3.0.0" />
+      <import addon="script.module.requests" version="0.0.0"/>
+      <import addon="script.module.web-pdb" />
+    </requires>
+    <extension point="kodi.context.item">
+      <menu id="kodi.core.main">
+        <item library="contextitem.py">
+          <label>Add to FavExtender</label>
+          <visible>true</visible>
+        </item>
+      </menu>
+    </extension>
+    <extension point="xbmc.python.pluginsource" library="default.py">
+      <!-- <provides>executable</provides> -->
+      <provides>video</provides>
+    </extension>
+    <extension point="xbmc.service" library="service.py"/>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">Favorite Context Menu Extender</summary>
+        <description lang="en">Adds a custom action to the context menu for favorites in Kodi.</description>
+        <platform>all</platform>
+        <assets>
+          <icon>resources/icon_ch.png</icon>
+        </assets>
+    </extension>
+</addon>
