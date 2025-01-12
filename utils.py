@@ -3,9 +3,11 @@ import xbmcvfs
 import xbmcgui
 import xbmcaddon
 
+from containercache import ContainerCache
+
 import time
 import base64
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
 def is_android():
     return xbmc.getCondVisibility('System.Platform.Android')
@@ -54,32 +56,6 @@ def check_local_path_and_encode(key_prefix, path):
                 f"{key_prefix}Data" : base64_string,
             }
 
-
-def ListFieldsFiles_to_Favorites(uri_container, lff):
-    art = lff.get('art',{})
-    art = {k:unquote(v.replace("image://", "").rstrip("/")) for k,v in art.items()}
-        
-    return {
-        "favoriteLabel" : lff['label'],
-        "label" : lff['label'],
-        "label2" : "",
-        "plot" : lff['plot'],
-        "firstDiscovered": int(time.time()),
-        "isFolder" : lff['filetype'] == 'directory',
-        "isLive": False,
-        "isDynamic": False,
-        "autoplay": False,
-        "addContent": False,
-        "mediaSource": "",
-        "uri" : lff['file'],
-        "uri_container" : uri_container,
-        "title" : lff['title'],
-        "fanartPath" : art.get('fanart', ""),
-        "posterPath" : art.get('poster', ""),
-        "thumbPath" : art.get('thumb', ""),
-        "icon" : art.get('icon', "")
-    }
-
 def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=False, addContent=False):
 
     fav_dict = {
@@ -104,12 +80,27 @@ def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=False, addConte
     fav_dict.update(check_local_path_and_encode("thumb", item.getArt('thumb')))
 
     if addContent:
-        from containercache import ContainerCache
         cc = ContainerCache()
-        content = cc.get_favorites(item.getPath())
+        content = cc.get(item.getPath())
         fav_dict["content"] = content
 
     return fav_dict
+
+
+def Channel_to_ListItem(channel):
+    li = xbmcgui.ListItem(channel)
+    addon = xbmcaddon.Addon()
+    addon_path = addon.getAddonInfo('path')
+
+    li.setArt({
+        'thumb': addon_path+"resources/placeholder.png"
+    })
+    li.setInfo('video', {
+        'title': channel
+    })
+
+    return li
+
 
 def Favorite_to_ListItem(fav, channel_name, containerLabel=None):
     li = xbmcgui.ListItem(fav['favoriteLabel'])
@@ -131,3 +122,22 @@ def Favorite_to_ListItem(fav, channel_name, containerLabel=None):
         custom_context_menu = [("Remove from FavExtender", f"RunScript({path}contextitem.py,remove_channel={channel_name},remove_fav={fav['favoriteLabel']})")]
     li.addContextMenuItems(custom_context_menu)
     return li
+
+
+def update_favorite(fav):
+    cc = ContainerCache()
+    container = cc.get(fav['uri_container'])
+    # import web_pdb; web_pdb.set_trace()
+    matches = [c for c in container if 'uri' in c and c['uri'] == fav['uri']]
+    if not matches:
+        matches = [c for c in container if c['label'] == fav['label']]
+        if not matches:
+            matches = [fav]
+
+    match = matches[0]
+
+    fav['thumbPath'] = match.get('thumbPath', fav['thumbPath'])
+    fav['fanartPath'] = match.get('fanartPath', fav['fanartPath'])
+    fav['posterPath'] = match.get('posterPath', fav['posterPath'])
+    fav['plot'] = match.get('plot', fav['plot'])
+    return fav

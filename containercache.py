@@ -1,6 +1,6 @@
 import requests
-import sys
-from utils import *
+import time
+from urllib.parse import unquote
 
 class ContainerCache:
     _instance = None
@@ -55,17 +55,29 @@ class ContainerCache:
         # Cache the response
         self.cache[uri_container] = response
         
-        return response
+        return [self.make_favorite(uri_container, lff) for lff in response]
 
-    def get_favorites(self, uri_container):
-        return [ListFieldsFiles_to_Favorites(uri_container, lff) for lff in self.get(uri_container)]
-    
-    def get_content(self, uri_container, channel_name="", containerLabel=""):
-        to_return = []
-        for fav in self.get_favorites(uri_container):
-            to_return.append({
-                            "url" : (sys.argv[0] + '?' + fav['uri']) if fav['isFolder'] else fav['uri'],
-                            "listitem" : Favorite_to_ListItem(fav, channel_name, containerLabel),
-                            "isFolder" : fav['isFolder']
-                        })
-        return to_return
+    def make_favorite(self, uri_container, lff):
+        art = lff.get('art',{})
+        art = {k:unquote(v.replace("image://", "").rstrip("/")) for k,v in art.items()}
+            
+        return {
+            "favoriteLabel" : lff['label'],
+            "label" : lff['label'],
+            "label2" : "",
+            "plot" : lff['plot'],
+            "firstDiscovered": int(time.time()),
+            "isFolder" : lff['filetype'] == 'directory',
+            "isLive": False,
+            "isDynamic": False,
+            "autoplay": False,
+            "addContent": False,
+            "mediaSource": "",
+            "uri" : lff['file'],
+            "uri_container" : uri_container,
+            "title" : lff['title'],
+            "fanartPath" : art.get('fanart', ""),
+            "posterPath" : art.get('poster', ""),
+            "thumbPath" : art.get('thumb', ""),
+            "icon" : art.get('icon', "")
+        }

@@ -34,60 +34,45 @@ class FavManager:
             self.load_favorites()
 
 
-    def get_favorites(self, channel_name):
+    def get_content(self, uri_container, channel_name="", containerLabel=""):
         cc = ContainerCache()
+        to_return = []
+        for fav in cc.get(uri_container):
+            to_return.append({
+                            "url" : (sys.argv[0] + '?' + fav['uri']) if fav['isFolder'] else fav['uri'],
+                            "listitem" : Favorite_to_ListItem(fav, channel_name, containerLabel),
+                            "isFolder" : fav['isFolder']
+                        })
+        return to_return
+    
+
+    def get_favorites(self, channel_name):
         to_return = []
         for fav in self.favorites[channel_name]:
             if fav['addContent']:
-                content = cc.get_content(fav['uri'], channel_name, fav['favoriteLabel'])
+                content = self.get_content(fav['uri'], channel_name, fav['favoriteLabel'])
                 to_return.extend(content)
             else:
                 if fav['uri_container'] and fav['isDynamic']:
-                    container = cc.get_favorites(fav['uri_container'])
-                    matches = [c for c in container if c['uri'] == fav['uri']]
-                    if not matches:
-                        matches = [c for c in container if c['label'] == fav['label']]
-                        if not matches:
-                            matches = [fav]
-
-                    match = matches[0]
-
-                    fav['thumbPath'] = match['thumbPath']
-                    fav['fanartPath'] = match['fanartPath']
-                    fav['posterPath'] = match['posterPath']
-                    fav['plot'] = match['plot']
+                    fav = update_favorite(fav)
 
                 to_return.append({
-                                        "url" : (f"{sys.argv[0]}?uri={b64encode(fav['uri'])}") if fav["isFolder"] else fav['uri'],
-                                        "listitem" : Favorite_to_ListItem(fav, channel_name),
-                                        "isFolder" : fav["isFolder"]
+                                    "url" : (f"{sys.argv[0]}?uri={b64encode(fav['uri'])}") if fav["isFolder"] else fav['uri'],
+                                    "listitem" : Favorite_to_ListItem(fav, channel_name),
+                                    "isFolder" : fav["isFolder"]
                                 })
         return to_return
 
 
     def get_channels(self):
         to_return = []
-        addon = xbmcaddon.Addon()
-        addon_path = addon.getAddonInfo('path')
         for channel, favs in self.favorites.items():
-            li = xbmcgui.ListItem(channel)
+
             if len(favs)==1 and favs[0]['addContent']: # single program content channel
-                li.setArt({
-                    "fanart": favs[0]["fanartPath"],
-                    "poster": favs[0]["posterPath"],
-                    "thumb": favs[0]["thumbPath"]
-                })
-                li.setInfo('video', {
-                    'title': favs[0]['title'],
-                    'plot': favs[0]['plot']
-                })
+                li = Favorite_to_ListItem(favs[0], channel)
             else:
-                li.setArt({
-                    'thumb': addon_path+"resources/placeholder.png"
-                })
-                li.setInfo('video', {
-                    'title': channel
-                })
+                li = Channel_to_ListItem(channel)
+
             path = xbmcaddon.Addon().getAddonInfo('path') 
             custom_context_menu = [("Remove from FavExtender", f"RunScript({path}contextitem.py,remove_channel={channel})")]
             li.addContextMenuItems(custom_context_menu)

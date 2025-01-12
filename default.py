@@ -2,10 +2,10 @@ import xbmc
 import xbmcplugin
 import xbmcaddon
 import sys
-from urllib.parse import urlparse, unquote, parse_qs
+from urllib.parse import parse_qs
 import base64
 
-from favmanager import FavManager, ContainerCache, Favorite_to_ListItem
+from favmanager import FavManager
 
 
 def b64decode(base64_string):
@@ -55,7 +55,6 @@ if __name__ == '__main__':
         elif 'uri' in params:
             # get fav content
             # xbmc.executebuiltin(f"RunPlugin({b64decode(params['uri'][0])})") # for some reason this won't work
-            cc = ContainerCache()
-            add_items(cc.get_content(b64decode(params['uri'][0])))
+            add_items(favs.get_content(b64decode(params['uri'][0])))
         else:
             log("Unknown params")
