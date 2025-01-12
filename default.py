@@ -1,11 +1,7 @@
 import xbmc
-import xbmcgui
 import xbmcplugin
 import xbmcaddon
-import json
-import os
 import sys
-import xbmcvfs
 from urllib.parse import urlparse, unquote, parse_qs
 import base64
 

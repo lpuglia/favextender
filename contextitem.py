@@ -1,6 +1,7 @@
 import xbmc
 import xbmcgui
 
+import sys
 from favmanager import FavManager, ListItem_to_Favorite
 
 def log(message):
