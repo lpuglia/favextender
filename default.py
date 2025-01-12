@@ -19,7 +19,7 @@ def log(message):
     xbmc.log("-----------------"+str(message), level=xbmc.LOGINFO)
 
 
-def add_DirItem_to_channel(dir_items, autoplay=False):
+def add_favorites_to_channel(dir_items, autoplay=False):
     """Add each favorite to the Kodi plugin directory"""
     log(addon_handle)
     for dir_item in dir_items:
@@ -63,8 +63,9 @@ if __name__ == '__main__':
             add_channels(favs.get_channels())
         elif 'uri' not in params:
             # get channel content
-            add_DirItem_to_channel(favs.get_favorites(sys.argv[2][1:]), autoplay = favs.favorites[sys.argv[2][1:]][0]['autoplay'] if favs.favorites[sys.argv[2][1:]] else False)
+            add_favorites_to_channel(favs.get_favorites(sys.argv[2][1:]), autoplay = favs.favorites[sys.argv[2][1:]][0]['autoplay'] if favs.favorites[sys.argv[2][1:]] else False)
         else:
+            # xbmc.executebuiltin(f"RunPlugin({b64decode(params['uri'][0])})") # for some reason this won't work
             # get fav content
             cc = ContainerCache()
-            add_DirItem_to_channel(cc.get_DirItems(b64decode(params['uri'][0])))
+            add_favorites_to_channel(cc.get_content(b64decode(params['uri'][0])))

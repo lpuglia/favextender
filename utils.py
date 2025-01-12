@@ -106,7 +106,7 @@ def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=False, addConte
     if addContent:
         from containercache import ContainerCache
         cc = ContainerCache()
-        content = cc.get_Favorites(item.getPath())
+        content = cc.get_favorites(item.getPath())
         fav_dict["content"] = content
 
     return fav_dict

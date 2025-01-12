@@ -3,9 +3,18 @@ import sys
 from utils import *
 
 class ContainerCache:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(ContainerCache, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
-        # Initialize an empty dictionary to store cached responses
-        self.cache = {}
+        if not hasattr(self, "_initialized"):
+            # Initialize an empty dictionary to store cached responses
+            self.cache = {}
+            self._initialized = True
     
     def get(self, uri_container):
         """
@@ -48,20 +57,18 @@ class ContainerCache:
         
         return response
 
-    def get_DirItems(self, uri_container, channel_name="", containerLabel=""):
-        # import web_pdb; web_pdb.set_trace()
+    def get_favorites(self, uri_container):
+        return [ListFieldsFiles_to_Favorites(uri_container, lff) for lff in self.get(uri_container)]
+    
+    def get_content(self, uri_container, channel_name="", containerLabel=""):
         to_return = []
-        for lff in self.get(uri_container):
-            fav = ListFieldsFiles_to_Favorites(uri_container, lff)
+        for fav in self.get_favorites(uri_container):
             li = Favorite_to_ListItem(fav, channel_name, containerLabel)
             to_return.append(
                         {
-                            "url" : (sys.argv[0] + '?' + lff['file']) if lff['filetype'] == 'directory' else lff['file'],
+                            "url" : (sys.argv[0] + '?' + fav['uri']) if fav['isFolder'] else fav['uri'],
                             "listitem" : li,
-                            "isFolder" : lff['filetype'] == 'directory'
+                            "isFolder" : fav['isFolder']
                         }
                     )
         return to_return
-
-    def get_Favorites(self, uri_container):
-        return [ListFieldsFiles_to_Favorites(uri_container, lff) for lff in self.get(uri_container)]

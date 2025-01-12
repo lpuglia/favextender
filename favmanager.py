@@ -39,12 +39,11 @@ class FavManager:
         to_return = []
         for fav in self.favorites[channel_name]:
             if fav['addContent']:
-                # import web_pdb; web_pdb.set_trace()
-                content = cc.get_DirItems(fav['uri'], channel_name, fav['favoriteLabel'])
+                content = cc.get_content(fav['uri'], channel_name, fav['favoriteLabel'])
                 to_return.extend(content)
             else:
                 if fav['uri_container'] and fav['isDynamic']:
-                    container = cc.get_Favorites(fav['uri_container'])
+                    container = cc.get_favorites(fav['uri_container'])
                     matches = [c for c in container if c['uri'] == fav['uri']]
                     if not matches:
                         matches = [c for c in container if c['label'] == fav['label']]
@@ -53,14 +52,10 @@ class FavManager:
 
                     match = matches[0]
 
-                    # art = match.get('art', {})
-                    # art = {k:unquote(v.replace("image://", "").rstrip("/")) for k,v in art.items()}
-
                     fav['thumbPath'] = match['thumbPath']
                     fav['fanartPath'] = match['fanartPath']
                     fav['posterPath'] = match['posterPath']
                     fav['plot'] = match['plot']
-                # import web_pdb; web_pdb.set_trace()
 
                 to_return.append(
                                     {
@@ -69,8 +64,6 @@ class FavManager:
                                         "isFolder" : fav["isFolder"]
                                     }
                                 )
-                # xbmc.log(str(to_return[-1]), xbmc.LOGINFO)
-
         return to_return
 
 
