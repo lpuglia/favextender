@@ -145,6 +145,9 @@ def Favorite_to_ListItem(fav):
         'plot': fav['plot']
     })
     li.setProperty('isPlayable', 'true')
+
+    custom_context_menu = [("Remove from FavExtender", "RunPlugin(plugin://your.plugin.id?action=custom_action)")]
+    li.addContextMenuItems(custom_context_menu)
     return li
 
 class ContainerCache:
@@ -205,6 +208,9 @@ class ContainerCache:
     def get_Favorites(self, uri_container):
         return [ListFieldsFiles_to_Favorites(uri_container, lff) for lff in self.get(uri_container)]
 
+def is_android():
+    return xbmc.getCondVisibility('System.Platform.Android')
+
 class FavManager:
     _instance = None
 
@@ -217,8 +223,12 @@ class FavManager:
 
         if not hasattr(self, "_initialized"):
             self.favorites = {}
-            home_folder = xbmcvfs.translatePath("special://home/")
-            self.file_path = os.path.join(home_folder, "exttv_favorite.json")
+            if is_android():
+                storage_folder = xbmcvfs.translatePath("/storage/emulated/0/Download/")
+            else:
+                storage_folder = xbmcvfs.translatePath("special://home/")
+
+            self.file_path = os.path.join(storage_folder, "exttv_favorite.json")
             self.load_favorites()
             self._initialized = True
 
@@ -288,6 +298,8 @@ class FavManager:
                 li.setInfo('video', {
                     'title': channel
                 })
+            custom_context_menu = [("Remove from FavExtender", "RunPlugin(plugin://your.plugin.id?action=custom_action)")]
+            li.addContextMenuItems(custom_context_menu)
             to_return.append(li)
         return to_return
 

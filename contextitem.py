@@ -71,10 +71,6 @@ def add_to_channel_dialog(channels):
 
 if __name__ == '__main__':
 
-    if "script.contextmenu.favextender" in sys.listitem.getPath() or \
-        "script.contextmenu.favextender" in xbmc.getInfoLabel('Container.FolderPath'):
-        xbmcgui.Dialog().ok("Not supported!", "You are trying to add a favextender item to itself, not supported")
-    else:
-        favs = FavManager()
-        channel_name, fav = add_to_channel_dialog([channel_name for channel_name in favs.favorites])
-        favs.add_to_channel(channel_name, fav)
+    favs = FavManager()
+    channel_name, fav = add_to_channel_dialog([channel_name for channel_name in favs.favorites])
+    favs.add_to_channel(channel_name, fav)

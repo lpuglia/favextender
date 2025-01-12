@@ -8,7 +8,7 @@
       <menu id="kodi.core.main">
         <item library="contextitem.py">
           <label>Add to FavExtender</label>
-          <visible>true</visible>
+          <visible>!String.StartsWith(ListItem.Path, "plugin://script.contextmenu.favextender/")</visible>
         </item>
       </menu>
     </extension>
