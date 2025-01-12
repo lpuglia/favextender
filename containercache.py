@@ -53,9 +53,9 @@ class ContainerCache:
         response = response['result']['files']
         
         # Cache the response
-        self.cache[uri_container] = response
+        self.cache[uri_container] = [self.make_favorite(uri_container, lff) for lff in response]
         
-        return [self.make_favorite(uri_container, lff) for lff in response]
+        return self.cache[uri_container]
 
     def make_favorite(self, uri_container, lff):
         art = lff.get('art',{})

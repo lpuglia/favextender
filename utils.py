@@ -58,7 +58,7 @@ def check_local_path_and_encode(key_prefix, path):
 
 def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=False, addContent=False):
 
-    fav_dict = {
+    fav = {
         "favoriteLabel" : name,
         "label" : item.getLabel(),
         "label2" : item.getLabel2(),
@@ -75,16 +75,16 @@ def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=False, addConte
         "title" : item.getLabel(),
     }
 
-    fav_dict.update(check_local_path_and_encode("fanart", item.getArt('fanart')))
-    fav_dict.update(check_local_path_and_encode("poster", item.getArt('poster')))
-    fav_dict.update(check_local_path_and_encode("thumb", item.getArt('thumb')))
+    fav.update(check_local_path_and_encode("fanart", item.getArt('fanart')))
+    fav.update(check_local_path_and_encode("poster", item.getArt('poster')))
+    fav.update(check_local_path_and_encode("thumb", item.getArt('thumb')))
 
-    if addContent:
+    if item.isFolder():
         cc = ContainerCache()
         content = cc.get(item.getPath())
-        fav_dict["content"] = content
+        fav["content"] = content
 
-    return fav_dict
+    return fav
 
 
 def Channel_to_ListItem(channel):

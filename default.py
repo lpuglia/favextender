@@ -55,6 +55,12 @@ if __name__ == '__main__':
         elif 'uri' in params:
             # get fav content
             # xbmc.executebuiltin(f"RunPlugin({b64decode(params['uri'][0])})") # for some reason this won't work
-            add_items(favs.get_content(b64decode(params['uri'][0])))
+            content, new_favorites = favs.get_content(b64decode(params['uri'][0]))
+            if 'channel_name' in params and new_favorites:
+                channel_name = params['channel_name'][0]
+                index = int(params['index'][0])
+                favs.favorites[channel_name][index]['content'] = new_favorites
+                favs.dump_favorites()
+            add_items(content)
         else:
             log("Unknown params")

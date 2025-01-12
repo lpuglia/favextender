@@ -36,27 +36,29 @@ class FavManager:
     def get_content(self, uri_container, channel_name="", containerLabel=""):
         cc = ContainerCache()
         to_return = []
-        for fav in cc.get(uri_container):
+        favs = cc.get(uri_container)
+        for fav in favs:
             to_return.append({
                             "url" : f"{sys.argv[0]}?uri={b64encode(fav['uri'])}" if fav["isFolder"] else fav['uri'],
                             "listitem" : Favorite_to_ListItem(fav, channel_name, containerLabel),
                             "isFolder" : fav['isFolder']
                         })
-        return to_return
+        return to_return, favs
     
 
     def get_favorites(self, channel_name):
         to_return = []
-        for fav in self.favorites[channel_name]:
+        for idx,fav in enumerate(self.favorites[channel_name]):
             if fav['addContent']:
-                content = self.get_content(fav['uri'], channel_name, fav['favoriteLabel'])
+                content, new_favorites = self.get_content(fav['uri'], channel_name, fav['favoriteLabel'])
+                fav['content'] = new_favorites
                 to_return.extend(content)
             else:
                 if fav['uri_container'] and fav['isDynamic']:
                     fav = update_favorite(fav)
 
                 to_return.append({
-                                    "url" : f"{sys.argv[0]}?uri={b64encode(fav['uri'])}" if fav["isFolder"] else fav['uri'],
+                                    "url" : f"{sys.argv[0]}?uri={b64encode(fav['uri'])}&channel_name={channel_name}&index={idx}" if fav["isFolder"] else fav['uri'],
                                     "listitem" : Favorite_to_ListItem(fav, channel_name),
                                     "isFolder" : fav["isFolder"]
                                 })
