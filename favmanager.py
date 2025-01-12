@@ -2,7 +2,6 @@ import os
 import sys
 import xbmc
 import xbmcvfs
-import xbmcgui
 import xbmcaddon
 import json
 
@@ -39,7 +38,7 @@ class FavManager:
         to_return = []
         for fav in cc.get(uri_container):
             to_return.append({
-                            "url" : (sys.argv[0] + '?' + fav['uri']) if fav['isFolder'] else fav['uri'],
+                            "url" : f"{sys.argv[0]}?uri={b64encode(fav['uri'])}" if fav["isFolder"] else fav['uri'],
                             "listitem" : Favorite_to_ListItem(fav, channel_name, containerLabel),
                             "isFolder" : fav['isFolder']
                         })
@@ -57,7 +56,7 @@ class FavManager:
                     fav = update_favorite(fav)
 
                 to_return.append({
-                                    "url" : (f"{sys.argv[0]}?uri={b64encode(fav['uri'])}") if fav["isFolder"] else fav['uri'],
+                                    "url" : f"{sys.argv[0]}?uri={b64encode(fav['uri'])}" if fav["isFolder"] else fav['uri'],
                                     "listitem" : Favorite_to_ListItem(fav, channel_name),
                                     "isFolder" : fav["isFolder"]
                                 })
