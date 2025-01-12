@@ -63,12 +63,9 @@ class ContainerCache:
     def get_content(self, uri_container, channel_name="", containerLabel=""):
         to_return = []
         for fav in self.get_favorites(uri_container):
-            li = Favorite_to_ListItem(fav, channel_name, containerLabel)
-            to_return.append(
-                        {
+            to_return.append({
                             "url" : (sys.argv[0] + '?' + fav['uri']) if fav['isFolder'] else fav['uri'],
-                            "listitem" : li,
+                            "listitem" : Favorite_to_ListItem(fav, channel_name, containerLabel),
                             "isFolder" : fav['isFolder']
-                        }
-                    )
+                        })
         return to_return

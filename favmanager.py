@@ -57,13 +57,11 @@ class FavManager:
                     fav['posterPath'] = match['posterPath']
                     fav['plot'] = match['plot']
 
-                to_return.append(
-                                    {
+                to_return.append({
                                         "url" : (f"{sys.argv[0]}?uri={b64encode(fav['uri'])}") if fav["isFolder"] else fav['uri'],
                                         "listitem" : Favorite_to_ListItem(fav, channel_name),
                                         "isFolder" : fav["isFolder"]
-                                    }
-                                )
+                                })
         return to_return
 
 
@@ -93,7 +91,11 @@ class FavManager:
             path = xbmcaddon.Addon().getAddonInfo('path') 
             custom_context_menu = [("Remove from FavExtender", f"RunScript({path}contextitem.py,remove_channel={channel})")]
             li.addContextMenuItems(custom_context_menu)
-            to_return.append(li)
+            to_return.append({
+                                "url" : f"{sys.argv[0]}?channel={channel}",
+                                "listitem" : li,
+                                "isFolder" : True
+                            })
         return to_return
 
     def add_to_channel(self, channel_name, fav=None):

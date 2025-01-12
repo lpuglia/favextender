@@ -19,7 +19,7 @@ def log(message):
     xbmc.log("-----------------"+str(message), level=xbmc.LOGINFO)
 
 
-def add_favorites_to_channel(dir_items, autoplay=False):
+def add_items(dir_items, autoplay=False):
     """Add each favorite to the Kodi plugin directory"""
     log(addon_handle)
     for dir_item in dir_items:
@@ -31,23 +31,10 @@ def add_favorites_to_channel(dir_items, autoplay=False):
     xbmcplugin.endOfDirectory(addon_handle)
 
     player = xbmc.Player()
-
     if autoplay and not player.isPlaying():
         li = dir_items[0]['listitem']
         xbmc.executebuiltin('RunPlugin("' + li.getPath() + '")')
 
-
-def add_channels(items):
-
-    for li in items:
-        xbmcplugin.addDirectoryItem(
-            handle = addon_handle,
-            url = sys.argv[0] + '?' + li.getLabel(),
-            listitem = li,
-            isFolder = True
-        )
-
-    xbmcplugin.endOfDirectory(addon_handle)
 
 if __name__ == '__main__':
 
@@ -58,14 +45,17 @@ if __name__ == '__main__':
     params = parse_qs(sys.argv[2].lstrip('?'))
 
     if favs.favorites:
-        if sys.argv[2] == "":
+        if params == {}:
             # get channel list
-            add_channels(favs.get_channels())
-        elif 'uri' not in params:
+            add_items(favs.get_channels())
+        elif 'channel' in params:
             # get channel content
-            add_favorites_to_channel(favs.get_favorites(sys.argv[2][1:]), autoplay = favs.favorites[sys.argv[2][1:]][0]['autoplay'] if favs.favorites[sys.argv[2][1:]] else False)
-        else:
-            # xbmc.executebuiltin(f"RunPlugin({b64decode(params['uri'][0])})") # for some reason this won't work
+            channel = params['channel'][0]
+            add_items(favs.get_favorites(channel), autoplay = favs.favorites[channel][0]['autoplay'] if favs.favorites[channel] else False)
+        elif 'uri' in params:
             # get fav content
+            # xbmc.executebuiltin(f"RunPlugin({b64decode(params['uri'][0])})") # for some reason this won't work
             cc = ContainerCache()
-            add_favorites_to_channel(cc.get_content(b64decode(params['uri'][0])))
+            add_items(cc.get_content(b64decode(params['uri'][0])))
+        else:
+            log("Unknown params")
