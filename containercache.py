@@ -66,7 +66,7 @@ class ContainerCache:
             "label" : lff['label'],
             "label2" : "",
             "plot" : lff['plot'],
-            "firstDiscovered": int(time.time()),
+            "updated": int(time.time()),
             "isFolder" : lff['filetype'] == 'directory',
             "isLive": False,
             "isDynamic": False,
@@ -76,8 +76,8 @@ class ContainerCache:
             "uri" : lff['file'],
             "uri_container" : uri_container,
             "title" : lff['title'],
-            "fanartPath" : art.get('fanart', ""),
-            "posterPath" : art.get('poster', ""),
-            "thumbPath" : art.get('thumb', ""),
+            "fanart" : art.get('fanart', ""),
+            "poster" : art.get('poster', ""),
+            "thumb" : art.get('thumb', ""),
             "icon" : art.get('icon', "")
         }

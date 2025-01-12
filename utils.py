@@ -40,8 +40,7 @@ def check_local_path_and_encode(key_prefix, path):
     # log(path)
     if is_url(path) or not path:
         return {
-                f"{key_prefix}Path" : path,
-                f"{key_prefix}Data" : None,
+                f"{key_prefix}" : path
             }
     else: # if it is a local resource encode it in base64
         with open(path, "rb") as binary_file:
@@ -52,7 +51,7 @@ def check_local_path_and_encode(key_prefix, path):
         path = path.replace(xbmcvfs.translatePath("special://home/addons/"), "")
 
         return {
-                f"{key_prefix}Path" : path,
+                f"{key_prefix}" : path,
                 f"{key_prefix}Data" : base64_string,
             }
 
@@ -63,7 +62,7 @@ def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=False, addConte
         "label" : item.getLabel(),
         "label2" : item.getLabel2(),
         "plot" : item.getVideoInfoTag().getPlot(),
-        "firstDiscovered": int(time.time()),
+        "updated": int(time.time()),
         "isFolder" : item.isFolder(),
         "isLive": isLive,
         "isDynamic": isDynamic,
@@ -78,6 +77,7 @@ def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=False, addConte
     fav.update(check_local_path_and_encode("fanart", item.getArt('fanart')))
     fav.update(check_local_path_and_encode("poster", item.getArt('poster')))
     fav.update(check_local_path_and_encode("thumb", item.getArt('thumb')))
+    fav.update(check_local_path_and_encode("icon", item.getArt('icon')))
 
     if item.isFolder():
         cc = ContainerCache()
@@ -106,9 +106,9 @@ def Favorite_to_ListItem(fav, channel_name, containerLabel=None):
     li = xbmcgui.ListItem(fav['favoriteLabel'])
 
     li.setArt({
-        'thumb': resolve_path(fav['thumbPath']),
-        'fanart': resolve_path(fav['fanartPath']),
-        'poster': resolve_path(fav['posterPath'] if fav['posterPath'] else fav['thumbPath']) # when showing a normal folder thumb becomes also the poster, but here i show a folder of playable items
+        'thumb': resolve_path(fav['thumb']),
+        'fanart': resolve_path(fav['fanart']),
+        'poster': resolve_path(fav['poster'] if fav['poster'] else fav['thumb']) # when showing a normal folder thumb becomes also the poster, but here i show a folder of playable items
     })
     li.setInfo('video', {
         'title': fav['title'],
@@ -136,8 +136,8 @@ def update_favorite(fav):
 
     match = matches[0]
 
-    fav['thumbPath'] = match.get('thumbPath', fav['thumbPath'])
-    fav['fanartPath'] = match.get('fanartPath', fav['fanartPath'])
-    fav['posterPath'] = match.get('posterPath', fav['posterPath'])
+    fav['thumb'] = match.get('thumb', fav['thumb'])
+    fav['fanart'] = match.get('fanart', fav['fanart'])
+    fav['poster'] = match.get('poster', fav['poster'])
     fav['plot'] = match.get('plot', fav['plot'])
     return fav
