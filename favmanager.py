@@ -10,7 +10,6 @@ from urllib.parse import unquote, urlparse
 import json
 import base64
 
-
 def b64encode(data):
     """
     Encode input to Base64.
@@ -81,34 +80,7 @@ def ListFieldsFiles_to_Favorites(uri_container, lff):
         "icon" : art.get('icon', "")
     }
 
-def ListFieldsFiles_to_ListItem(lff):
-    art = lff.get('art',{})
-    art = {k:unquote(v.replace("image://", "").rstrip("/")) for k,v in art.items()}
-        
-    list_item = xbmcgui.ListItem(label=lff['label'], label2="")
-
-    # Set additional properties for the ListItem
-    list_item.setInfo('video', {
-        'plot': lff['plot']
-    })
-
-    # Set the path to the media file (e.g., a video file)
-    list_item.setPath(lff['file'])
-
-    # Optionally, add an image (e.g., thumbnail or fanart)
-    list_item.setArt({
-        'thumb': art.get('thumb', ""),
-        'fanart': art.get('fanart', ""),
-        'poster': art.get('poster', ""),
-        'icon': art.get('icon', ""),
-    })
-
-    list_item.setProperty('isPlayable', 'true')
-
-    return list_item
-
-def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=True, addContent=False):
-    # import web_pdb; web_pdb.set_trace()
+def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=False, addContent=False):
 
     fav_dict = {
         "favoriteLabel" : name,
@@ -130,9 +102,15 @@ def ListItem_to_Favorite(item, name, isLive, isDynamic, autoplay=True, addConten
     fav_dict.update(check_local_path_and_encode("fanart", item.getArt('fanart')))
     fav_dict.update(check_local_path_and_encode("poster", item.getArt('poster')))
     fav_dict.update(check_local_path_and_encode("thumb", item.getArt('thumb')))
+
+    if addContent:
+        cc = ContainerCache()
+        content = cc.get_Favorites(item.getPath())
+        fav_dict["content"] = content
+
     return fav_dict
 
-def Favorite_to_ListItem(fav):
+def Favorite_to_ListItem(fav, channel_name, containerLabel=None):
     li = xbmcgui.ListItem(fav['favoriteLabel'])
 
     li.setArt({
@@ -145,8 +123,11 @@ def Favorite_to_ListItem(fav):
         'plot': fav['plot']
     })
     li.setProperty('isPlayable', 'true')
-
-    custom_context_menu = [("Remove from FavExtender", "RunPlugin(plugin://your.plugin.id?action=custom_action)")]
+    path = xbmcaddon.Addon().getAddonInfo('path') 
+    if containerLabel:
+        custom_context_menu = [("Remove content parent from FavExtender", f"RunScript({path}contextitem.py,remove_channel={channel_name},remove_fav={containerLabel})")]
+    else:
+        custom_context_menu = [("Remove from FavExtender", f"RunScript({path}contextitem.py,remove_channel={channel_name},remove_fav={fav['favoriteLabel']})")]
     li.addContextMenuItems(custom_context_menu)
     return li
 
@@ -196,14 +177,20 @@ class ContainerCache:
         
         return response
 
-    def get_DirItems(self, uri_container):
-        return [
-                    {
-                        "url" : (sys.argv[0] + '?' + lff['file']) if lff['filetype'] == 'directory' else lff['file'],
-                        "listitem" : ListFieldsFiles_to_ListItem(lff) ,
-                        "isFolder" : lff['filetype'] == 'directory'
-                    }
-                for lff in self.get(uri_container)]
+    def get_DirItems(self, uri_container, channel_name="", containerLabel=""):
+        # import web_pdb; web_pdb.set_trace()
+        to_return = []
+        for lff in self.get(uri_container):
+            fav = ListFieldsFiles_to_Favorites(uri_container, lff)
+            li = Favorite_to_ListItem(fav, channel_name, containerLabel)
+            to_return.append(
+                        {
+                            "url" : (sys.argv[0] + '?' + lff['file']) if lff['filetype'] == 'directory' else lff['file'],
+                            "listitem" : li,
+                            "isFolder" : lff['filetype'] == 'directory'
+                        }
+                    )
+        return to_return
 
     def get_Favorites(self, uri_container):
         return [ListFieldsFiles_to_Favorites(uri_container, lff) for lff in self.get(uri_container)]
@@ -241,7 +228,8 @@ class FavManager:
         to_return = []
         for fav in self.favorites[channel_name]:
             if fav['addContent']:
-                content = cc.get_DirItems(fav['uri'])
+                # import web_pdb; web_pdb.set_trace()
+                content = cc.get_DirItems(fav['uri'], channel_name, fav['favoriteLabel'])
                 to_return.extend(content)
             else:
                 if fav['uri_container'] and fav['isDynamic']:
@@ -266,7 +254,7 @@ class FavManager:
                 to_return.append(
                                     {
                                         "url" : (f"{sys.argv[0]}?uri={b64encode(fav['uri'])}") if fav["isFolder"] else fav['uri'],
-                                        "listitem" : Favorite_to_ListItem(fav),
+                                        "listitem" : Favorite_to_ListItem(fav, channel_name),
                                         "isFolder" : fav["isFolder"]
                                     }
                                 )
@@ -298,7 +286,8 @@ class FavManager:
                 li.setInfo('video', {
                     'title': channel
                 })
-            custom_context_menu = [("Remove from FavExtender", "RunPlugin(plugin://your.plugin.id?action=custom_action)")]
+            path = xbmcaddon.Addon().getAddonInfo('path') 
+            custom_context_menu = [("Remove from FavExtender", f"RunScript({path}contextitem.py,remove_channel={channel})")]
             li.addContextMenuItems(custom_context_menu)
             to_return.append(li)
         return to_return
@@ -310,6 +299,19 @@ class FavManager:
                 self.favorites[channel_name].append(fav)
             else:
                 self.favorites[channel_name] = [fav]
+
+        self.dump_favorites()
+
+    def remove_from_channel(self, channel_name, fav_name):
+
+        if channel_name in self.favorites:
+            self.favorites[channel_name] = [fav for fav in self.favorites[channel_name] if fav['favoriteLabel'] != fav_name]
+
+        self.dump_favorites()
+
+    def remove_channel(self, channel_name):
+        if channel_name in self.favorites:
+            del self.favorites[channel_name]
 
         self.dump_favorites()
 

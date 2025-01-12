@@ -63,10 +63,12 @@ if __name__ == '__main__':
 
     if favs.favorites:
         if sys.argv[2] == "":
+            # get channel list
             add_channels(favs.get_channels())
-        elif 'uri' in params:
-            cc = ContainerCache()
-            # import web_pdb; web_pdb.set_trace()
-            add_DirItem_to_channel(cc.get_DirItems(b64decode(params['uri'][0])))
+        elif 'uri' not in params:
+            # get channel content
+            add_DirItem_to_channel(favs.get_favorites(sys.argv[2][1:]), autoplay = favs.favorites[sys.argv[2][1:]][0]['autoplay'] if favs.favorites[sys.argv[2][1:]] else False)
         else:
-            add_DirItem_to_channel(favs.get_favorites(sys.argv[2][1:]), autoplay = favs.favorites[sys.argv[2][1:]][0]['autoplay'])
+            # get fav content
+            cc = ContainerCache()
+            add_DirItem_to_channel(cc.get_DirItems(b64decode(params['uri'][0])))

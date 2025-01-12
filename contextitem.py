@@ -1,24 +1,13 @@
 import xbmc
-import xbmcvfs
 import xbmcgui
-import xbmcplugin
-import xbmcaddon
-import json
-import time
-import base64
-import os
 
 from favmanager import FavManager, ListItem_to_Favorite
-
-ADDON = xbmcaddon.Addon()
-ADDON_NAME = ADDON.getAddonInfo('name')
-ADDON_PATH = ADDON.getAddonInfo('path')
 
 def log(message):
     xbmc.log("-----------------"+str(message), level=xbmc.LOGINFO)
 
 def add_favorite(name, options):
-    autoplay = True if len(options)<3 else options[2]
+    autoplay = False#True if len(options)<3 else options[2]
     addContent = False if len(options)<3 else options[3]
     return ListItem_to_Favorite(sys.listitem,
                                 name,
@@ -69,8 +58,24 @@ def add_to_channel_dialog(channels):
 
     return None, None
 
-if __name__ == '__main__':
+def show_confirmation_dialog(params):
+    dialog = xbmcgui.Dialog()
+    if 'remove_fav' in params:
+        return dialog.yesno("Remove", f"Are you sure you want to remove {params['remove_fav']} from favorites?")
+    else:
+        return dialog.yesno("Remove", f"Are you sure you want to remove {params['remove_channel']} channel?")
 
+if __name__ == '__main__':
     favs = FavManager()
-    channel_name, fav = add_to_channel_dialog([channel_name for channel_name in favs.favorites])
-    favs.add_to_channel(channel_name, fav)
+    params = dict(arg.split('=') for arg in sys.argv[1:] if '=' in arg)
+
+    if 'remove_channel' in params:
+        if show_confirmation_dialog(params):
+            if 'remove_fav' in params:
+                favs.remove_from_channel(params['remove_channel'], params['remove_fav'])
+            else:
+                favs.remove_channel(params['remove_channel'])
+            xbmc.executebuiltin("Container.Refresh")
+    else:
+        channel_name, fav = add_to_channel_dialog([channel_name for channel_name in favs.favorites])
+        favs.add_to_channel(channel_name, fav)
